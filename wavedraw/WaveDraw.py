@@ -34,8 +34,9 @@ class WaveDraw(object):
             signal.addSplit()
         self.incrClk()
     
-    def addEdge(self,edge:str):
-        self.edgeList.append(edge)
+    def addEdge(self,*edges):
+        for edge in edges:
+            self.edgeList.append(edge)
     
     def getClockNum(self)->int:
         maxClock=0

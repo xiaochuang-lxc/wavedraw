@@ -29,9 +29,10 @@ ack.wave(wave="010",node="..b")
 wave.addEdge("a->b write")
 
 wave.incrClk(3)
+wave.addSplit()
 # read operation
 read.wave("1110",node="c...")
-addr.wave(wave="4..x",data=["A2","A2","A2",None])
+addr.wave(wave="4",data=["A2"],node=".",endWave="x",holdCycle=3)
 ack.wave(wave="0010",node="...d")
 rdata.wave("5x",data=["Q2",None],offset=2)
 wave.addEdge("c->d read")

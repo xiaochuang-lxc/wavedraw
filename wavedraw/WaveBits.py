@@ -39,22 +39,46 @@ class WaveBits(object):
     def addTrigger(self,wave:str,node:str=".",data:str=None,offset:int=0):
         self.addTriggerAtClock(clock=self.wavedraw.currentClk+offset,wave=wave,data=data,node=node)
     
-    def wave(self,wave:str,data:list[str],node:str=None,offset:int=0):
-        #node process
-        nodeAdapt=node
-        if node==None:
-            nodeAdapt="."*len(wave)
-        else:
-            if len(wave)!=len(node):
-                print(f"WaveBits:{self.name} wave:{wave} len mismatch node:{node} len at clock:{self.wavedraw.currentClk+offset}")
+    def wave(self,wave:str,data:list[str],node:str=None,offset:int=0,endWave:str="x",endData:str=None,endNode:str=".",holdCycle:int=None):
+        """ add wave to signal
+
+        Args:
+            wave (str): signal wave string
+            data (list[str]): wave data list
+            node (str, optional): signal node define. Defaults to None.
+            offset (int, optional): wave start offset based on current clock time. Defaults to 0.
+            endWave (str, optional): end wave string,only used when holdCycle!=None. Defaults to "x".
+            endData (str, optional):  end data string,only used when holdCycle!=None. Defaults to None.
+            endNode (str, optional):  end node string,only used when holdCycle!=None. Defaults to ".".
+            holdCycle (int, optional): repeat wave holdCycle times and then end with endWave/enddata/endnode when holdCycle!=None. Defaults to None.
+        """
+        if(holdCycle==None):
+            #node process
+            nodeAdapt=node
+            if node==None:
+                nodeAdapt="."*len(wave)
+            else:
+                if len(wave)!=len(node):
+                    print(f"WaveBits:{self.name} wave:{wave} len mismatch node:{node} len at clock:{self.wavedraw.currentClk+offset}")
+                    sys.exit(-1)
+            # data process
+            dataAdapt=data
+            if len(wave)!=len(data):
+                print(f"WaveBits:{self.name} wave:{wave} len mismatch data:{data} len at clock:{self.wavedraw.currentClk+offset}")
                 sys.exit(-1)
-        # data process
-        dataAdapt=data
-        if len(wave)!=len(data):
-            print(f"WaveBits:{self.name} wave:{wave} len mismatch data:{data} len at clock:{self.wavedraw.currentClk+offset}")
-            sys.exit(-1)
-        for index in range(len(wave)):
-            self.addTrigger(wave=wave[index],node=nodeAdapt[index],data=dataAdapt[index],offset=offset+index)
+            for index in range(len(wave)):
+                self.addTrigger(wave=wave[index],node=nodeAdapt[index],data=dataAdapt[index],offset=offset+index)
+        else:
+            if len(wave)!=1 or len(data)!=1 or len(node)!=1:
+                print(f"WaveBits:{self.name} wave:{wave} and node:{node} and data:{data} should be only one symbol when holdCycle != None")
+                sys.exit(-1)
+            for index in range(holdCycle):
+                if index==0:
+                    self.wave(wave=wave,data=data,node=node,offset=offset+index,holdCycle=None)
+                else:
+                    self.wave(wave=wave,data=data,node=".",offset=offset+index,holdCycle=None)
+            self.wave(wave=endWave,data=[endData],node=endNode,offset=offset+holdCycle,holdCycle=None)
+
     
     def addSplit(self):
         self.addTrigger(wave="|",data=None,node=".",offset=0)
