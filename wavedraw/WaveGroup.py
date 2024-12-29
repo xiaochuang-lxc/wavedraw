@@ -4,14 +4,14 @@ from wavedraw.WaveDraw import WaveDraw
 from wavedraw.WaveBits import WaveBits
 from wavedraw.WaveBool import WaveBool
 class WaveGroup(object):
-    def __init__(self,name:str,wavedraw:WaveDraw,period:int=1,phase:int=1):
+    def __init__(self,name:str,wavedraw:WaveDraw,period:float=1,phase:int=1):
         self.name=name
         self.wavedraw=wavedraw
         self.period=period
         self.phase=phase
         self.signalList=[]
     
-    def generateBool(self,name:str,initWave:str="0",initNode:str=".",period:int=None,phase:int=None):
+    def generateBool(self,name:str,initWave:str="0",initNode:str=".",period:float=None,phase:int=None):
         periodAdapt=period
         phaseAdapt=phase
         if periodAdapt==None:
@@ -22,7 +22,7 @@ class WaveGroup(object):
         self.signalList.append(waveBool)
         return waveBool
     
-    def generateBits(self,name:str,initWave:str="0",initNode:str=".",initData:str=None,period:int=None,phase:int=None):
+    def generateBits(self,name:str,initWave:str="0",initNode:str=".",initData:str=None,period:float=None,phase:int=None):
         periodAdapt=period
         phaseAdapt=phase
         if periodAdapt==None:

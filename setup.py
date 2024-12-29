@@ -5,5 +5,5 @@ setup(
     version="1.0.0",
     description="python tool used to generate wavedrom json",
     author="xiaochuang.lxc",
-    packages=['wavedraw']
+    packages=['wavedraw',"wavedraw.vcd"]
 )

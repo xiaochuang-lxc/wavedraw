@@ -3,7 +3,7 @@
 from wavedraw.WaveDraw import WaveDraw
 import sys
 class WaveBits(object):
-    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="x",initData:str=None,initNode:str=".",period:int=1,phase:int=1):
+    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="x",initData:str=None,initNode:str=".",period:float=1,phase:int=1):
         self.name=name
         self.waveList=[initWave]
         self.wavedraw=wavedraw
@@ -120,6 +120,6 @@ class WaveBits(object):
             if not index== (len(self.dataList)-1):
                 dataStr+=","
         data=",".join(self.dataList)
-        return f"\"name\":\"{self.name}\",\"wave\":\'{wave}\',\"data\":[{dataStr}],\"node\":\'{node}\',\"period\":{self.phase},\"phase\":{self.phase}"        
+        return f"\"name\":\"{self.name}\",\"wave\":\'{wave}\',\"data\":[{dataStr}],\"node\":\'{node}\',\"period\":{self.period},\"phase\":{self.phase}"        
 
         
