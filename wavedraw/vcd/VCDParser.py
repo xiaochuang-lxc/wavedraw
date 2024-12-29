@@ -15,6 +15,7 @@ class Signal(object):
     
     def addEvent(self,clock:int,value:str):
         self.valueDict[clock]=value
+        #print(f"{self.name} register value:{value} at clock {clock}")
     
     def generateWave(self,wavedraw:WaveDraw,parentGroup:WaveGroup=None,startTime:int=None,endTime:int=None,period:float=1):
         if startTime!=None and endTime!=None:
@@ -223,7 +224,10 @@ class VCDParser(object):
 
     def generateWave(self,title:str,startTime:int=None,endTime:int=None,period:float=1)->str:
         wave=WaveDraw(title=title)
-        self.top.generateWave(wavedraw=wave,parentGroup=None,startTime=int(startTime/self.halfClockPeriod),endTime=int(endTime/self.halfClockPeriod),period=period)
+        if startTime==None or endTime==None:
+            self.top.generateWave(wavedraw=wave,parentGroup=None,startTime=None,endTime=None,period=period)
+        else:
+            self.top.generateWave(wavedraw=wave,parentGroup=None,startTime=int(startTime/self.halfClockPeriod),endTime=int(endTime/self.halfClockPeriod),period=period)
         return wave.generateJson()
 
 

@@ -4,7 +4,7 @@ from wavedraw.WaveDraw import WaveDraw
 from wavedraw.WaveBits import WaveBits
 from wavedraw.WaveBool import WaveBool
 class WaveGroup(object):
-    def __init__(self,name:str,wavedraw:WaveDraw,period:float=1,phase:int=1):
+    def __init__(self,name:str,wavedraw:WaveDraw,period:float=1,phase:int=0):
         self.name=name
         self.wavedraw=wavedraw
         self.period=period

@@ -3,7 +3,7 @@
 import sys
 from wavedraw.WaveDraw import WaveDraw
 class WaveBool(object):
-    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="0",initNode:str=".",period:float=1,phase:int=1):
+    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="0",initNode:str=".",period:float=1,phase:int=0):
         self.name=name
         self.wavedraw=wavedraw
         self.waveList=[initWave]

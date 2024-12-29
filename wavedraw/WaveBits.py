@@ -3,7 +3,7 @@
 from wavedraw.WaveDraw import WaveDraw
 import sys
 class WaveBits(object):
-    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="x",initData:str=None,initNode:str=".",period:float=1,phase:int=1):
+    def __init__(self,name:str,wavedraw:WaveDraw,initWave:str="x",initData:str=None,initNode:str=".",period:float=1,phase:int=0):
         self.name=name
         self.waveList=[initWave]
         self.wavedraw=wavedraw

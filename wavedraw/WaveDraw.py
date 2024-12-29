@@ -8,19 +8,19 @@ class WaveDraw(object):
         self.hscale=1
         self.edgeList=[]
     
-    def generateBool(self,name:str,initWave:str="0",initNode:str=".",period:float=1,phase:int=1):
+    def generateBool(self,name:str,initWave:str="0",initNode:str=".",period:float=1,phase:int=0):
         from wavedraw.WaveBool import WaveBool
         waveBool= WaveBool(name=name,wavedraw=self,initWave=initWave,initNode=initNode,period=period,phase=phase)
         self.signalList.append(waveBool)
         return waveBool
     
-    def generateBits(self,name:str,initWave:str="0",initNode:str=".",initData:str=None,period:float=1,phase:int=1):
+    def generateBits(self,name:str,initWave:str="0",initNode:str=".",initData:str=None,period:float=1,phase:int=0):
         from wavedraw.WaveBits import WaveBits
         waveBits= WaveBits(name=name,wavedraw=self,initWave=initWave,initNode=initNode,initData=initData,period=period,phase=phase)
         self.signalList.append(waveBits)
         return waveBits
 
-    def generateGroup(self,name:str,period:float=1,phase:int=1):
+    def generateGroup(self,name:str,period:float=1,phase:int=0):
         from wavedraw.WaveGroup import WaveGroup
         waveGroup=WaveGroup(name=name,wavedraw=self,period=period,phase=phase)
         self.signalList.append(waveGroup)
