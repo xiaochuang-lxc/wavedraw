@@ -86,6 +86,66 @@ class Signal(object):
                     else:
                         signalWave.addTriggerAtClock(clock=clock,wave="x",data=value)
 
+class SignalSet(Signal):
+    def __init__(self, name:str,symbol:str,isBool:bool):
+        super().__init__(name, symbol, isBool)
+        self.bitDict={}
+    
+    def addBoolSignal(self,bitId:int,signal:Signal):
+        self.bitDict[bitId]=signal
+    
+    def getClockValue(self,oldValue:int,oldValueValid:bool,clock:int):
+        #find if x in this signal
+        invalidValue=True
+        bitValueDict={}
+        for bitId,signal in self.bitDict.items():
+            if clock in signal.valueDict.keys():
+                if signal.valueDict[clock] not in ["1","0"]:
+                    invalidValue=False
+                else:
+                    bitValueDict[bitId]=int(signal.valueDict[clock])
+        if invalidValue:
+            newValue=0
+            if oldValueValid:
+                newValue=oldValue
+            for bitId,value in bitValueDict.items():
+                #clear old value
+                if ((newValue>>bitId)&0x1)==1:
+                    newValue=newValue-(1<<bitId)
+                #add new value
+                newValue=newValue+(value<<bitId)
+            return newValue
+                
+        else:
+            return None
+
+    
+    def updateValue(self):
+        clockTicks=[]
+        for signal in self.bitDict.values():
+            clockTicks.extend(list(signal.valueDict.keys()))
+        clockSet=sorted(list(set(clockTicks)))
+        #calculate clock 0 value
+        oldValue=self.getClockValue(oldValue=None,oldValueValid=False,clock=0)
+        if oldValue==None:
+            self.addEvent(clock=0,value="x")
+        else:
+            self.addEvent(clock=0,value=hex(oldValue))
+        #add another value
+        for clock in clockSet:
+            if clock!=0:
+                newValue=0
+                if oldValue==None:
+                    newValue=self.getClockValue(oldValue=oldValue,oldValueValid=False,clock=clock)
+                else:
+                    newValue=self.getClockValue(oldValue=oldValue,oldValueValid=True,clock=clock)
+                if newValue==None:
+                    self.addEvent(clock=clock,value="x")
+                    oldValue=None
+                else:
+                    self.addEvent(clock=clock,value=hex(newValue))
+                    oldValue=newValue
+
 class Module(object):
     def __init__(self,name:str):
         self.moduleName=name
@@ -97,6 +157,12 @@ class Module(object):
     
     def addSignal(self,signal:Signal):
         self.signalDict[signal.name]=signal
+    
+    def hasSignal(self,signalName:str):
+        if signalName in self.signalDict.keys():
+            return True
+        else:
+            return False
     
     def registerEvent(self,clock:int,symbol:str,value:str)->bool:
         signalFind=False
@@ -111,6 +177,8 @@ class Module(object):
     
     def generateWave(self,wavedraw:WaveDraw,parentGroup:WaveGroup=None,startTime:int=None,endTime:int=None,period:float=1):
         for signal in self.signalDict.values():
+            if isinstance(signal,SignalSet):
+                signal.updateValue()
             signal.generateWave(wavedraw,parentGroup,startTime,endTime,period)
         for module in self.subModuleDIct.values():
             if parentGroup==None:
@@ -169,8 +237,22 @@ class VCDParser(object):
             if ("$var" in line):
                 lineSplited=line.split()
                 symbolList.append(lineSplited[3])
-                signal=Signal(name=lineSplited[4],symbol=lineSplited[3],isBool=lineSplited[2]=="1")
-                currentModule.addSignal(signal)
+                signal=None
+                if lineSplited[2]=="1" and len(lineSplited)==7: # one bit signal
+                    signal=Signal(name=f"{lineSplited[4]}{lineSplited[5]}",symbol=lineSplited[3],isBool=lineSplited[2]=="1")
+                    if currentModule.hasSignal(signalName=lineSplited[4]):
+                        currentModule.signalDict[lineSplited[4]].addBoolSignal(bitId=int(lineSplited[5][1:-1]),signal=signal)
+                    else:
+                        signalSet=SignalSet(name=lineSplited[4],symbol=lineSplited[3],isBool=False)
+                        currentModule.addSignal(signalSet)
+                        signalSet.addBoolSignal(bitId=int(lineSplited[5][1:-1]),signal=signal)
+                else:
+                    if lineSplited[2]!="1" and len(lineSplited)==7:
+                        if not lineSplited[5].endswith(":0]"):
+                            print(f"can't analyse line:{line}")
+                            sys.exit(-1)
+                    signal=Signal(name=lineSplited[4],symbol=lineSplited[3],isBool=lineSplited[2]=="1")
+                    currentModule.addSignal(signal)
                 if lineSplited[3] in self.symbolDict.keys():
                     self.symbolDict[lineSplited[3]].append(signal)
                 else:
@@ -197,30 +279,26 @@ class VCDParser(object):
     def __parserSignal(self,signalCtxt:list[str]):
         currentClock=0
         for line in signalCtxt:
-            if line.startswith("#"):
+            if line.startswith("$"):
+                pass
+            elif line.startswith("#"):
                 currentClock=int(int(line[1:])/self.halfClockPeriod)
-            else:
-                symbolName=None
-                for symbol in self.symbolList:
-                    if line.endswith(symbol):
-                        symbolName=symbol
-                if symbolName==None:
-                    print(f"can't analysis line:{line}")
-                value=line[:-len(symbolName)].strip()
-                if value.startswith("b"):
-                    if "x" in value or "z" in value:
-                        self.__registerEvent(clock=currentClock,symbol=symbolName,value="x")
-                        #self.top.registerEvent(clock=currentClock,symbol=symbolName,value="x")
-                    else:
-                        self.__registerEvent(clock=currentClock,symbol=symbolName,value=str(hex(int(value[1:],2))))
-                        #self.top.registerEvent(clock=currentClock,symbol=symbolName,value=str(hex(int(value[1:],2))))
+            elif line[0] in ['0','1','x','X','z','Z']: # single bit
+                symbolName=line[1:]
+                value=line[0]
+                if value not in ['0','1']:
+                    self.__registerEvent(clock=currentClock,symbol=symbolName,value="z")
                 else:
-                    if "x" in line or "z" in value:
-                        self.__registerEvent(clock=currentClock,symbol=symbolName,value="x")
-                        #self.top.registerEvent(clock=currentClock,symbol=symbolName,value="x")
-                    else:
-                        self.__registerEvent(clock=currentClock,symbol=symbolName,value=value)
-                        #self.top.registerEvent(clock=currentClock,symbol=symbolName,value=value)
+                    self.__registerEvent(clock=currentClock,symbol=symbolName,value=value)
+            elif line[0] in ['b','B','r','R']: # multi bit
+                [value,symbolName]=line.split(" ")
+                if "x" in value:
+                    self.__registerEvent(clock=currentClock,symbol=symbolName,value="x")
+                else:
+                    self.__registerEvent(clock=currentClock,symbol=symbolName,value=str(hex(int(value[1:],2))))
+            else:
+                print(f"can't analyse line:{line}")
+                sys.exit(-1)
 
     def generateWave(self,title:str,startTime:int=None,endTime:int=None,period:float=1)->str:
         wave=WaveDraw(title=title)
